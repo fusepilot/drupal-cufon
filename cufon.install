@@ -1,0 +1,36 @@
+<?php
+// $Id$
+
+function cufon_install() {
+	
+}
+
+function cufon_uninstall() {
+	db_delete('cufon_replacements')
+	->execute();
+}
+
+
+function cufon_schema() {
+	$schema['cufon_replacements'] = array(
+    'fields' => array(
+      'selectors' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'font' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'hover' => array(
+        'type' => 'int',
+        'length' => 32,
+        'not null' => FALSE,
+      ),
+    ),
+  );
+
+  return $schema;
+}

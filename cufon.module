@@ -1,0 +1,86 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * This is the file description for Cufon module.
+ *
+ * In this more verbose, multi-line description, you can specify what this
+ * file does exactly. Make sure to wrap your documentation in column 78 so
+ * that the file can be displayed nicely in default-sized consoles.
+ */
+
+DEFINE('CUFON_JS_DIR', "sites/all/libraries/cufon");
+DEFINE('CUFON_JS', CUFON_JS_DIR . "/cufon-yui.js");
+
+/**
+ * Implements hook_menu().
+ */
+function cufon_menu() {
+  $items = array();
+
+	$items['admin/config/user-interface/cufon'] = array(
+		'title' => 'Cufon',
+		'description' => 'Configuration for the Cufon module',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('cufon_form'),
+		'access arguments' => array('administer cufon'),
+		'type' => MENU_NORMAL_ITEM,
+    'file' => 'cufon.admin.inc',
+	);
+	
+	return $items;
+}
+
+function cufon_init() {
+	
+	//add cufon
+	drupal_add_js(drupal_get_path('module', 'cufon') . '/js/cufon-yui.js', 'file');
+	
+	//add fonts
+	$fonts = _cufon_get_fonts();
+	foreach ($fonts as $font) {
+		drupal_add_js($font->uri, 'file');
+	}
+	
+}
+
+function cufon_preprocess_page(&$vars) {
+	
+	$replacements = db_select('cufon_replacements')
+	->fields('cufon_replacements')
+	->execute()
+	->fetchAll();
+	
+	$js = '';
+	
+	//TODO cleanup, refactor, add hover
+	
+	foreach($replacements as $replacement) {
+		$split = explode('.', $replacement->font);
+		$fontName = $split[0];
+		
+		$js .= 'Cufon.replace("' . $replacement->selectors . '", { fontFamily: "' . $fontName . '" });';
+	}
+	
+	//run
+	drupal_add_js('jQuery(document).ready(function () { ' . $js .  ' });',
+    array('type' => 'inline', 'scope' => 'footer', 'weight' => 5)
+  );
+}
+
+function _cufon_get_fonts() {
+	$fonts = file_scan_directory(CUFON_JS_DIR, '/.font(.min)?.js$/');
+	
+	return $fonts;
+}
+
+function _cufon_get_font_options() {
+	$font_options = array();
+	
+	foreach (_cufon_get_fonts() as $font) {
+		$font_options[$font->filename] = $font->filename;
+	}
+	
+	return($font_options);
+}
